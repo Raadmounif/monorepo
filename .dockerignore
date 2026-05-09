@@ -1,0 +1,17 @@
+**/node_modules
+**/dist
+**/build
+**/.next
+**/.turbo
+**/coverage
+**/*.tsbuildinfo
+**/.env
+**/.env.local
+**/.env.*.local
+.git
+.github
+.vscode
+.idea
+**/.DS_Store
+README.md
+docker-compose.yml
