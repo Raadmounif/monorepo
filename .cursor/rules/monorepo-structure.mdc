@@ -1,0 +1,82 @@
+---
+alwaysApply: true
+description: Where business logic, contracts, and UI helpers belong.
+---
+
+# Monorepo boundaries — critical rules
+
+## NEVER put business logic in `apps/web`
+
+`apps/web` is a frontend that talks to `apps/api` over HTTP. It must not contain database access, queue jobs, AI calls, third-party API clients, or any non-UI orchestration.
+
+**WRONG (do not do this):**
+
+```typescript
+// ❌ apps/web/src/lib/users.ts
+export async function createUserInDb(input: CreateUserInput) {
+  // direct DB / external API work here
+}
+```
+
+**CORRECT:**
+
+```typescript
+// ✅ apps/api/src/users/users.service.ts (or a new service)
+@Injectable()
+export class UsersService {
+  create(input: CreateUserInput): User { /* business logic */ }
+}
+
+// ✅ apps/api/src/users/users.controller.ts (HTTP boundary)
+@Post()
+create(@Body(new ZodValidationPipe(createUserInputSchema)) input: CreateUserInput) {
+  return this.users.create(input)
+}
+
+// ✅ apps/web/src/app/users/page.tsx (calls API via typed client)
+const { users } = await api.users.list()
+```
+
+## Where things go
+
+### `apps/api/src/<feature>/` — business logic
+
+- `<feature>.controller.ts` — thin HTTP layer; parse input with the contract's Zod schema via `ZodValidationPipe`, then delegate.
+- `<feature>.service.ts` — the actual logic. Pure as possible; no HTTP types.
+- `<feature>.module.ts` — wires controller + providers, registered in `AppModule`.
+- `<feature>.service.test.ts` — Vitest, colocated.
+
+### `apps/web/src/app/` — UI only
+
+- Pages and layouts (App Router). Server Components by default; add `'use client'` only when you need client interactivity.
+- `apps/web/src/lib/` is for **frontend** utilities (formatters, hooks). Not for backend logic.
+- `apps/web/src/env.ts` is the only place that reads `process.env`.
+
+### `packages/contracts/` — the API shape
+
+- Define a Zod schema for every request body and response.
+- Export both the schema and the inferred type.
+- Add a method to `createApiClient` for every new endpoint.
+- This is the only thing both `apps/web` and `apps/api` depend on.
+
+### `packages/ui/` — visual primitives only
+
+- Stateless or near-stateless React components (`Button`, `Card`, etc.).
+- No data fetching. No app-specific layouts.
+
+## Imports
+
+- Always import from the package entry: `import { x } from '@raadmounif/contracts'`.
+- NEVER deep-import: `import { x } from '@raadmounif/contracts/src/users'` — ESLint will reject it.
+- If a symbol you need is not exported, add it to the package's `src/index.ts` first.
+
+## Cost of violations
+
+Putting business logic in `apps/web` means:
+
+- ❌ The same logic cannot be reused by `apps/api` or future workers.
+- ❌ Server-only secrets get pulled into the Next bundle.
+- ❌ You cannot deploy api and web independently.
+- ❌ The codebase rots into a Next-only app and stops being a real monorepo.
+
+**ALWAYS ASK: "Is this an HTTP boundary, business logic, a contract, or a UI primitive?" before creating a file.**

@@ -1,0 +1,100 @@
+---
+alwaysApply: true
+description: Requires Zod validation for all JSON parsing operations.
+---
+
+# JSON parsing — mandatory Zod validation
+
+## NEVER use type assertions for JSON
+
+**WRONG:**
+
+```typescript
+// ❌ type assertion — no runtime check
+const result = (await response.json()) as SomeType
+
+// ❌ unsafe destructuring on unknown
+const body = await request.json()
+const { field } = body
+
+// ❌ any
+const data: any = await response.json()
+```
+
+**CORRECT — always use Zod:**
+
+```typescript
+const resultSchema = z.object({
+  success: z.boolean(),
+  data: z.string(),
+})
+
+const result = resultSchema.parse(await response.json())
+```
+
+## Patterns
+
+### Define the schema first
+
+```typescript
+const apiResponseSchema = z.object({
+  message: z.string(),
+  data: z.array(z.object({ id: z.string(), name: z.string() })),
+})
+type ApiResponse = z.infer<typeof apiResponseSchema>
+```
+
+### NestJS controller bodies
+
+Use `ZodValidationPipe` (in `apps/api/src/common/`) with the schema from `@raadmounif/contracts`:
+
+```typescript
+@Post()
+create(@Body(new ZodValidationPipe(createUserInputSchema)) input: CreateUserInput) {
+  return this.users.create(input)
+}
+```
+
+### Next.js route handlers (only if you ever add one)
+
+```typescript
+import { z } from 'zod'
+
+export async function POST(req: Request) {
+  const schema = z.object({ id: z.string().uuid() })
+  const body = schema.parse(await req.json())
+  // ... use body
+  return Response.json({ ok: true })
+}
+```
+
+### External API responses
+
+```typescript
+const externalSchema = z.object({
+  data: z.object({ field: z.string() }).optional(),
+  errors: z.array(z.object({ message: z.string() })).optional(),
+})
+
+const res = await fetch(externalApi)
+const validated = externalSchema.parse(await res.json())
+```
+
+## Where Zod is mandatory
+
+- HTTP request bodies (controllers / route handlers).
+- Query parameters that go past a single string.
+- Webhook payloads.
+- Any third-party API JSON response.
+- Anything stored as JSON in a database when read back.
+
+`@raadmounif/contracts` already does this for the typed client; do not bypass it with a hand-written `fetch`.
+
+## Why
+
+- Runtime safety against drift between server and client.
+- Schema doubles as living documentation.
+- Automatic TS types via `z.infer`.
+- Coercion / defaults for free.
+
+If you're parsing JSON, you must use Zod. No exceptions.

@@ -1,0 +1,1 @@
+Review your plan with a critical eye before implementing it. Pull up the actual code paths it will touch (read the files, do not assume). Then re-state the plan, calling out anything you would change after looking again.

@@ -1,0 +1,65 @@
+---
+description: NestJS conventions for apps/api
+globs: apps/api/**/*.ts
+alwaysApply: false
+---
+
+# NestJS conventions
+
+## Layout
+
+Group code by feature. Each feature is a folder under `apps/api/src/`:
+
+```
+apps/api/src/<feature>/
+├── <feature>.module.ts
+├── <feature>.controller.ts
+├── <feature>.service.ts
+└── <feature>.service.test.ts
+```
+
+Cross-cutting code (pipes, guards, interceptors, filters) lives in `apps/api/src/common/`.
+
+Register every new module in `apps/api/src/app.module.ts`.
+
+## Controllers
+
+- Controllers are the HTTP boundary. They should:
+  1. Validate input via `ZodValidationPipe(<schema from @raadmounif/contracts>)`.
+  2. Delegate to a service.
+  3. Return a value matching the contract response.
+- No business logic, no DB access, no third-party clients in controllers.
+- The global prefix is `/api` (set in `main.ts`). Do not duplicate `'api'` in `@Controller()` decorators.
+
+## Services
+
+- Services are `@Injectable()` and contain the actual logic.
+- Methods should be small and named for the action: `list`, `create`, `update`, `delete`, `assertCanX`.
+- Throw `BadRequestException`, `NotFoundException`, etc. for HTTP-mapped errors.
+- Return plain data; the framework serializes JSON.
+
+## Validation
+
+- Always validate request bodies with the matching Zod schema from `@raadmounif/contracts`:
+  ```typescript
+  @Post()
+  create(@Body(new ZodValidationPipe(createUserInputSchema)) input: CreateUserInput) {
+    return this.users.create(input)
+  }
+  ```
+- Never trust raw `unknown` past the controller boundary.
+
+## Env
+
+- Read env via `import { env } from './env'` (or relative).
+- All env keys must be in the Zod schema in `apps/api/src/env.ts`. If a value is missing the process should fail at boot, not at use site.
+
+## Adapter
+
+- This API runs on **Fastify** (`@nestjs/platform-fastify`), not Express. Avoid `@types/express` patterns. Use Fastify-typed handlers if you need raw req/res.
+
+## Tests
+
+- Vitest, colocated next to the unit (`*.service.test.ts`).
+- Test services directly. Construct them with `new UsersService()` rather than spinning up the whole Nest app for unit tests.
+- Run a single package's tests with `pnpm test --filter @raadmounif/api`.

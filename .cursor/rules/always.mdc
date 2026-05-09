@@ -1,0 +1,22 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+
+## Development cycle
+
+1. Before writing any code, propose a plan and PAUSE for the user's approval.
+2. Only after the user approves the plan, start writing code.
+3. After non-trivial changes, run `pnpm typecheck` and `pnpm lint`.
+4. If lint reports auto-fixable issues, run `pnpm lint:fix` first.
+5. To run tests for a single package: `pnpm test --filter @raadmounif/<package>`.
+6. Never start the dev server, never curl localhost, never open a browser. Trust the user to verify locally.
+
+REMEMBER: a plan + user sign-off comes BEFORE any code change.
+
+## Current dev status
+
+Status: `in development`.
+
+This is a personal monorepo template. There are no live users and no deployment yet. Breaking changes and data resets are acceptable.

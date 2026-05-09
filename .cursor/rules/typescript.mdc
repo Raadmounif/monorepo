@@ -1,0 +1,48 @@
+---
+description:
+globs: **/*.ts,**/*.tsx
+alwaysApply: false
+---
+
+# TypeScript best practices
+
+## Type system
+
+- Prefer `interface` for object shapes, `type` for unions, intersections, and mapped types.
+- NEVER use `any` or `as any`. Use `unknown` and narrow.
+- Use Zod for runtime validation; derive types with `z.infer<typeof schema>`.
+- Use generics for reusable patterns.
+- The repo enables `verbatimModuleSyntax`, so use `import type { Foo }` for type-only imports.
+
+## Naming
+
+- `PascalCase` — types, interfaces, classes, React components.
+- `camelCase` — variables, functions.
+- `UPPER_SNAKE_CASE` — true constants.
+- Use auxiliary verbs for booleans: `isLoading`, `hasError`, `canEdit`.
+- Suffix React prop interfaces with `Props` (e.g. `ButtonProps`).
+
+## Code organization
+
+- One component or one class per file.
+- Use barrel exports via `src/index.ts` for shared packages.
+- Co-locate types with their use site; promote to `types.ts` only when shared.
+- Prefer functions over classes (NestJS providers are the obvious exception).
+
+## Functions
+
+- Explicit return types on exported functions.
+- Arrow functions for callbacks; function declarations for top-level helpers.
+- Prefer `async`/`await` over raw `.then`.
+
+## Imports
+
+- Inside an app, use `@/...` for paths under `src/` (configured in tsconfig).
+- Across the workspace, import only from package entries: `@raadmounif/contracts`, `@raadmounif/ui`, etc.
+- NEVER use inline `await import(...)` in normal code.
+- Do not invent placeholder values like `'UNKNOWN'`. Use `null` or model the absence in the type.
+
+## Error handling
+
+- Do not add try/catch unless you actually handle the error in a meaningful way.
+- Let unknown failures bubble; in NestJS they become 500s, in Next they become error boundaries.

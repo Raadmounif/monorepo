@@ -1,0 +1,77 @@
+---
+description: How to add an environment variable to apps/api or apps/web
+alwaysApply: false
+---
+
+# Environment variables
+
+This monorepo validates env at boot using `@t3-oss/env-core` (re-exported as `createEnv` from `@raadmounif/env`). Each app composes its own validator, so it crashes early if a value is missing or wrong.
+
+## Adding a server-only var to `apps/api`
+
+1. **Edit `apps/api/src/env.ts`** and add the var to the `server` block:
+
+   ```typescript
+   import { createEnv, sharedServerEnv } from '@raadmounif/env'
+   import { z } from 'zod'
+
+   export const env = createEnv({
+     server: {
+       ...sharedServerEnv,
+       PORT: z.coerce.number().int().positive().default(4000),
+       CORS_ORIGIN: z.string().default('http://localhost:3000'),
+       MY_NEW_SECRET: z.string().min(1), // <— add here
+     },
+     runtimeEnv: process.env,
+     emptyStringAsUndefined: true,
+   })
+   ```
+
+2. **Document it** in `apps/api/.env.example` so other devs know it exists.
+
+3. **Use it via `env.MY_NEW_SECRET`** anywhere in `apps/api/src/`. Never reach for `process.env` directly outside `env.ts`.
+
+## Adding a public var to `apps/web` (browser-readable)
+
+Public vars MUST be prefixed `NEXT_PUBLIC_` so Next.js inlines them.
+
+1. **Edit `apps/web/src/env.ts`**:
+
+   ```typescript
+   export const env = createEnv({
+     client: {
+       NEXT_PUBLIC_API_URL: z.string().url().default('http://localhost:4000/api'),
+       NEXT_PUBLIC_FEATURE_FLAG: z.enum(['on', 'off']).default('off'),
+     },
+     clientPrefix: 'NEXT_PUBLIC_',
+     runtimeEnv: {
+       NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+       NEXT_PUBLIC_FEATURE_FLAG: process.env.NEXT_PUBLIC_FEATURE_FLAG,
+     },
+     emptyStringAsUndefined: true,
+   })
+   ```
+
+2. **Document** in `apps/web/.env.example`.
+
+3. **Use** via `import { env } from '@/env'` — works in both Server and Client Components.
+
+## Adding a server-only var to `apps/web` (used in Server Components / route handlers)
+
+Add it under a `server` block in `apps/web/src/env.ts` and list it in `runtimeEnv`. Never read it from a `'use client'` file.
+
+## Updating `turbo.json`
+
+If a new env var changes build output (e.g. an inline-public var or a build-time toggle), add it to:
+
+- `globalEnv` (for variables read by multiple tasks), and/or
+- the relevant task's `env` array (e.g. `build`, `lint`).
+
+This keeps Turborepo's cache correct.
+
+## Don'ts
+
+- Don't put a single `.env` at the repo root. Each app owns its own `.env.local`.
+- Don't read `process.env` outside of `env.ts`.
+- Don't commit `.env`, `.env.local`, or anything secret. Only `.env.example`.
+- Don't add a server secret to the `client` block of `apps/web/src/env.ts` — that ships it to the browser.

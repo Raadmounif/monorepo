@@ -1,0 +1,55 @@
+---
+description: How to add and consume API contracts
+globs: packages/contracts/**/*.ts,apps/api/**/*.controller.ts,apps/web/**/*.ts,apps/web/**/*.tsx
+alwaysApply: false
+---
+
+# API contracts (`@raadmounif/contracts`)
+
+`packages/contracts` is the single source of truth for the request/response shape of every endpoint. Both `apps/api` and `apps/web` import from it.
+
+## Adding an endpoint
+
+When you add a new endpoint, follow these steps in order:
+
+1. **Schema** — define the request input and response body as Zod schemas in `packages/contracts/src/<feature>.ts`:
+
+   ```typescript
+   export const createPostInputSchema = z.object({
+     title: z.string().min(1).max(200),
+     body: z.string().min(1),
+   })
+   export type CreatePostInput = z.infer<typeof createPostInputSchema>
+
+   export const postSchema = z.object({
+     id: z.string().uuid(),
+     title: z.string(),
+     body: z.string(),
+     createdAt: z.string().datetime(),
+   })
+   export type Post = z.infer<typeof postSchema>
+   ```
+
+2. **Re-export** — add the schemas/types to `packages/contracts/src/index.ts` (or via the existing `<feature>.ts` re-export).
+
+3. **Client method** — add a method to `createApiClient` in `packages/contracts/src/client.ts` that calls the endpoint and parses the response with the schema:
+
+   ```typescript
+   posts: {
+     create: async (input: CreatePostInput) => {
+       const data = await request('/posts', { method: 'POST', body: JSON.stringify(input) })
+       return postSchema.parse(data)
+     },
+   }
+   ```
+
+4. **API controller** — implement the route in `apps/api`, validating the body with `ZodValidationPipe(createPostInputSchema)` and returning data that matches `postSchema`.
+
+5. **Consume in web** — call `api.posts.create(...)` from `apps/web`. The result is fully typed.
+
+## Rules
+
+- Never duplicate types between client and server. If the API controller's return type drifts from `postSchema`, fix the schema or the controller — never declare it twice.
+- Always use the schema name in the response parser. This means a schema mismatch fails loudly at runtime in dev.
+- Do not introduce a separate fetch client in `apps/web`. Use `createApiClient` so every call goes through one parse step.
+- `packages/contracts` must NOT depend on `@nestjs/*`, `next/*`, or anything app-specific. Keep it Zod + types only.

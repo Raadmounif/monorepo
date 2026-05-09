@@ -1,0 +1,44 @@
+---
+description: Use shadcn semantic color tokens instead of raw Tailwind colors when working with UI.
+globs: apps/web/**/*.tsx,packages/ui/**/*.tsx
+alwaysApply: false
+---
+
+# shadcn color conventions
+
+When shadcn/ui is in use, prefer its semantic color tokens over raw Tailwind colors. They flip correctly under dark/light mode and stay consistent with shadcn primitives.
+
+## Mappings
+
+### Text
+
+- `text-gray-900` → `text-foreground`
+- `text-gray-600` / `text-gray-500` / `text-gray-400` → `text-muted-foreground`
+- `text-red-600` → `text-destructive`
+- `text-blue-600` / `text-blue-800` → `text-primary` (and `text-primary/80` for hover)
+
+### Status / state
+
+- Success → `text-chart-1`
+- Primary action → `text-primary`
+- Warning → `text-chart-4`
+- Error → `text-destructive`
+- Neutral / disabled → `text-muted-foreground`
+
+## Examples
+
+```tsx
+// ❌ raw colors
+<h1 className="text-gray-900">Dashboard</h1>
+<p className="text-gray-600">Manage settings</p>
+<span className="text-red-600">Failed</span>
+
+// ✅ semantic tokens
+<h1 className="text-foreground">Dashboard</h1>
+<p className="text-muted-foreground">Manage settings</p>
+<span className="text-destructive">Failed</span>
+```
+
+## Where the tokens come from
+
+The semantic tokens are defined as CSS variables in the app's global stylesheet (`apps/web/src/app/globals.css`). When shadcn is initialized, its CLI writes the variables there. Until then, this rule is dormant.

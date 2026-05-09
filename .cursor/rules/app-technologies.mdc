@@ -1,0 +1,21 @@
+---
+alwaysApply: true
+description: The technologies this monorepo uses. Reference this before suggesting libraries.
+---
+
+# Technologies used
+
+- **TypeScript 5** — strict mode across every package, project references at the root.
+- **pnpm workspaces + Turborepo** — task graph and caching.
+- **Next.js 15 (App Router) + React 19** — `apps/web`, served on port 3000.
+- **NestJS 11 on Fastify** — `apps/api`, served on port 4000 with global prefix `/api`.
+- **Tailwind v4** — used in `apps/web`, configured via `@tailwindcss/postcss`.
+- **Zod** — request/response validation; the contract package is Zod-first.
+- **`@t3-oss/env-core`** — env validation, exposed via `@raadmounif/env`.
+- **ESLint 9 (flat config) + Prettier 3** — shared from `tooling/eslint-config` and `tooling/prettier-config`.
+- **Husky + lint-staged** — pre-commit Prettier on staged files.
+- **Changesets** — versioning for shared `packages/*` (apps are ignored).
+- **Vitest** — tests in `apps/api` and any package that needs them.
+- **Docker Compose** — Postgres + Redis available for local infra; **not yet wired** to apps.
+
+There is **no ORM, auth, or job queue wired in yet**. Do not assume Prisma, Drizzle, Kysely, NextAuth, BullMQ, etc. exist. If you need one, propose adding it first.

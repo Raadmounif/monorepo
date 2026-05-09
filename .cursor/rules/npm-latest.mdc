@@ -1,0 +1,17 @@
+---
+alwaysApply: true
+---
+
+# npm package installation
+
+When installing npm packages, always install the latest version by appending `@latest` and target the right workspace with `--filter`.
+
+Examples:
+
+```bash
+pnpm add some-package@latest --filter @raadmounif/web
+pnpm add -D some-types@latest --filter @raadmounif/web
+pnpm add some-server-package@latest --filter @raadmounif/api
+```
+
+Never install runtime deps in the workspace root. The root `package.json` is dev-only (turbo, prettier, husky, etc.).

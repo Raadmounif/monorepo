@@ -1,0 +1,38 @@
+---
+alwaysApply: true
+---
+
+# Project structure
+
+This monorepo is split into apps, shared packages, and tooling configs. Use the right home for new code.
+
+## `apps/`
+
+Deployable units. Each app has its own `package.json`, env, Dockerfile and lifecycle.
+
+- **`apps/web`** — Next.js 15 (App Router, React 19, Tailwind v4). Pages live in `src/app/`. The typed API client is wired in `src/lib/api.ts` and reads `NEXT_PUBLIC_API_URL` from `src/env.ts`.
+- **`apps/api`** — NestJS 11 on Fastify. Entry `src/main.ts` sets global prefix `/api` and CORS. Feature modules live under `src/<feature>/` (controller + service + module + tests). Cross-cutting helpers go in `src/common/`.
+
+## `packages/`
+
+Shared libraries. They MUST NOT depend on any app. They MAY depend on each other when there is no cycle.
+
+- **`packages/contracts`** — Zod schemas for requests/responses **and** the typed `createApiClient()` consumed by the web app. The single source of truth for the API shape.
+- **`packages/env`** — Re-exports `createEnv` from `@t3-oss/env-core` plus shared schema fragments (`sharedServerEnv`).
+- **`packages/ui`** — Shared React UI (`Button`, `Card`, `cn`). Consumed by Next via `transpilePackages`.
+
+## `tooling/`
+
+Shared configs only — no runtime code.
+
+- **`tooling/tsconfig`** — `base.json`, `library.json`, `nextjs.json`, `nestjs.json`. Apps and packages `extends` these via `@raadmounif/tsconfig/<file>.json`.
+- **`tooling/eslint-config`** — Flat configs: `base`, `library`, `react`, `next`, `nest`. Apps/packages re-export the right preset from a 3-line `eslint.config.js`.
+- **`tooling/prettier-config`** — Optional shared Prettier preset (root `.prettierrc.json` is the workspace default).
+
+## What does NOT exist yet
+
+- No `packages/db`, no ORM, no migrations.
+- No auth package, no `packages/auth`.
+- No worker / queue app.
+
+If a task seems to need any of these, propose creating them first instead of squeezing them into an existing folder.

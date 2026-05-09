@@ -1,0 +1,35 @@
+---
+description:
+globs: **/*.tsx
+alwaysApply: false
+---
+
+# React conventions
+
+## Files
+
+- kebab-case for files and directories.
+- One component per file. Named exports, not default — except where Next.js requires a default export (`page.tsx`, `layout.tsx`, `error.tsx`, `not-found.tsx`, etc.).
+
+## Components
+
+- Keep components small. Pull logic into hooks or helpers when it grows.
+- Push state and side effects as low as possible (the component that owns the data should own the mutation).
+- Reach for `@raadmounif/ui` first. If it doesn't have what you need, add it there before inventing a one-off in `apps/web`.
+- Use `cn` from `@raadmounif/ui` (or local equivalent) for class merging.
+- Do not `import * as React from 'react'`. Import the hooks/types you need by name.
+
+## Server vs client (Next App Router)
+
+- Components are **Server Components by default**. Add `'use client'` only when you need:
+  - browser APIs (`window`, `localStorage`, etc.)
+  - interactivity (`useState`, `useEffect`, event handlers)
+  - third-party client-only libraries
+- Read env in Server Components / route handlers via `apps/web/src/env.ts`. Never read `process.env` directly in client components.
+- Data fetching that goes to `apps/api` should use the typed client from `apps/web/src/lib/api.ts`. Prefer doing the fetch in a Server Component when possible.
+
+## UI and styling
+
+- Tailwind v4. Mobile-first responsive classes.
+- When/if shadcn/ui is added, use semantic color tokens (`text-foreground`, `text-muted-foreground`, `text-destructive`, `text-primary`) rather than raw Tailwind colors.
+- Provide sensible default props for components.

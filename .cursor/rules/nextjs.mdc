@@ -1,0 +1,44 @@
+---
+description: Next.js 15 App Router conventions for apps/web
+globs: apps/web/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Next.js (App Router) conventions
+
+## Routing
+
+- All routes live under `apps/web/src/app/`. The directory name is the URL segment.
+- A route folder needs a `page.tsx` to be reachable.
+- `layout.tsx` wraps every route below it.
+- Loading and error states use `loading.tsx` / `error.tsx`.
+- Dynamic segments use folder names like `[id]` and the page receives `{ params }` typed by Next.
+
+## Server vs client
+
+- Default to Server Components. They can `await` directly (e.g. `const { users } = await api.users.list()`).
+- Mark a file with `'use client'` ONLY when you need state, effects, refs, or browser APIs.
+- Never put server-only code (DB calls, secrets, etc.) inside `'use client'` files. Even if it works in dev, it ships to the browser.
+
+## Data access
+
+- Talk to the API through the typed client in `apps/web/src/lib/api.ts`, which uses `createApiClient` from `@raadmounif/contracts`.
+- Do NOT add a second fetch wrapper. Add new endpoints to `packages/contracts` first, then call them from the client.
+- For cache control on a Server Component page, set `export const dynamic = 'force-dynamic'` only when truly needed; otherwise let Next decide.
+
+## Env access
+
+- Read env via `import { env } from '@/env'`.
+- Server-only vars go under the `server` key. Client vars must be prefixed `NEXT_PUBLIC_` and listed under the `client` key.
+- Never call `process.env.X` directly from components.
+
+## Styling
+
+- Tailwind v4 via `@tailwindcss/postcss`. Global CSS lives in `src/app/globals.css`.
+- Components from `@raadmounif/ui` are consumed as source (`transpilePackages` in `next.config.ts`). Tailwind scans them via the `@source` directive in `globals.css`.
+
+## Don't
+
+- Don't put NestJS code or business logic in `apps/web`.
+- Don't import from `apps/api/...` directly. Cross app boundaries only via HTTP and the contracts package.
+- Don't use Pages Router (`pages/`). This project is App-Router-only.

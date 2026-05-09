@@ -1,0 +1,74 @@
+---
+description:
+globs: **/*.ts,**/*.tsx
+alwaysApply: false
+---
+
+# Code conventions
+
+## General
+
+1. **Idiomatic TypeScript** — strict types, no `any`.
+2. **Minimal comments** — only when intent is non-obvious. Do not narrate code.
+3. **Tests as documentation** — colocated `*.test.ts` (Vitest) when behavior is not trivial.
+4. **kebab-case** for file and directory names. PascalCase only inside files (component / class names).
+5. After meaningful changes run `pnpm typecheck` and `pnpm lint`. Use `pnpm lint:fix` first when fixable.
+
+## Installing packages
+
+This is a pnpm workspace. Always install into the right package with `--filter`, never at the root for runtime deps.
+
+```bash
+pnpm add uuid@latest --filter @raadmounif/api
+pnpm add -D @types/uuid@latest --filter @raadmounif/api
+
+pnpm add some-react-lib@latest --filter @raadmounif/web
+```
+
+## Sharing code across the workspace
+
+To make a function or type available to another workspace package or app:
+
+1. Add it to the source folder of its package (e.g. `packages/contracts/src/...`).
+2. Re-export it from that package's **`src/index.ts`**.
+3. Import it from the package name only:
+
+```typescript
+// ✅ correct — package entry
+import { type User, createUserInputSchema } from '@raadmounif/contracts'
+
+// ❌ wrong — deep path, ESLint will fail
+import { createUserInputSchema } from '@raadmounif/contracts/src/users'
+```
+
+If the symbol is not exported, add the export first; do not deep-import.
+
+## Backend organization (`apps/api`)
+
+Follow the NestJS feature-module pattern:
+
+```
+apps/api/src/<feature>/
+├── <feature>.module.ts       # registers controller + providers
+├── <feature>.controller.ts   # thin HTTP layer
+├── <feature>.service.ts      # business logic
+└── <feature>.service.test.ts # Vitest
+```
+
+Inside the service, keep functions named for what they do:
+
+- `getX(...)` / `listX(...)` — read
+- `createX(...)` / `updateX(...)` / `deleteX(...)` — write
+- `assertCanX(...)` — permission checks (throw on failure)
+- `validateX(...)` — input checks beyond Zod parsing
+
+Cross-cutting helpers (pipes, guards, filters) live in `apps/api/src/common/`.
+
+## Validation
+
+- Validate every HTTP body with the matching Zod schema from `@raadmounif/contracts` via `ZodValidationPipe`.
+- Validate every external JSON response with Zod (see `zod-json-parsing` rule).
+
+## Don't drift the scope
+
+Only make the changes the user asked for. If a request conflicts with existing code or implies extra work, pause and ask before going further.

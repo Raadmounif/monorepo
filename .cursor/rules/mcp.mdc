@@ -1,0 +1,18 @@
+---
+alwaysApply: true
+description: When and how to use MCP servers for research and package docs.
+---
+
+## Web research
+
+When you need current information (library APIs, CVEs, recent best practices), use a web-search MCP (e.g. Perplexity) over guessing from memory. Send the full question with context, not bare keywords.
+
+## NPM package documentation
+
+Before using an unfamiliar npm package:
+
+1. Resolve the library ID via the Context7 MCP (`resolve-library-id`).
+2. Fetch the docs (`get-library-docs`) for the resolved ID.
+3. Combine with a focused web search if the docs are thin.
+
+Read the package's interface BEFORE writing code that calls it. Do not fabricate APIs.

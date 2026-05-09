@@ -1,0 +1,27 @@
+---
+description: How to install and use shadcn/ui components (when shadcn is added to apps/web)
+globs: apps/web/**/*.tsx,packages/ui/**/*.tsx
+alwaysApply: false
+---
+
+# shadcn/ui
+
+shadcn/ui is **not yet installed** in this repo. If you decide to add it, use the `shadcn` package (the old `shadcn-ui` package is deprecated):
+
+```bash
+pnpm dlx shadcn@latest init --cwd apps/web
+pnpm dlx shadcn@latest add button --cwd apps/web
+```
+
+When adding components:
+
+- Install into `apps/web/src/components/ui/` (Next app) for app-only components.
+- For components shared with future apps, lift them into `packages/ui` and re-export from `packages/ui/src/index.ts`.
+- Always check whether a component already exists under `apps/web/src/components/ui/` or `packages/ui/src/` before installing.
+- Read the component docs at `https://ui.shadcn.com/docs/components/<name>` before using it; APIs change.
+
+## Common components reference
+
+`accordion`, `alert`, `alert-dialog`, `aspect-ratio`, `avatar`, `badge`, `breadcrumb`, `button`, `calendar`, `card`, `carousel`, `chart`, `checkbox`, `collapsible`, `combobox`, `command`, `context-menu`, `data-table`, `date-picker`, `dialog`, `drawer`, `dropdown-menu`, `form`, `hover-card`, `input`, `input-otp`, `label`, `menubar`, `navigation-menu`, `pagination`, `popover`, `progress`, `radio-group`, `resizable`, `scroll-area`, `select`, `separator`, `sheet`, `sidebar`, `skeleton`, `slider`, `sonner`, `switch`, `table`, `tabs`, `textarea`, `toast`, `toggle`, `toggle-group`, `tooltip`, `spinner`, `kbd`, `button-group`, `input-group`, `field`, `item`, `empty`.
+
+If shadcn is added, also follow the `shadcn-color-conventions` rule.
